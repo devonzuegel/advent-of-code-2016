@@ -189,11 +189,13 @@ TURNS = {
   W: { L: :S, R: :N }
 }.freeze
 
+def get_total(c)
+  ((c[:N] - c[:S]) + (c[:E] - c[:W])).abs
+end
+
 def test_count(computed, expected)
-  if computed != expected
+  if (computed != expected) || (get_total(computed) != get_total(expected))
     puts 'FAILURE'.red
-    puts computed
-    puts expected
   else
     puts 'PASSED'.green
   end
@@ -202,28 +204,26 @@ end
 def compute(directions)
   facing   = :N
   counters = COUNTERS.clone
-  ap counters
 
   directions.each do |d|
-    puts "#{facing} => #{TURNS[facing][d[:direction]]}"
-    puts d
     facing = TURNS[facing][d[:direction]]
     counters[facing] += d[:count]
   end
-  puts facing
-  # ap counters
+
   counters
 end
 
 all_directions = [
   {
     expected: { E: 2, N: 3, S: 0, W: 0 },
+    result: 5,
     directions: [
       { direction: :R, count: 2 },
       { direction: :L, count: 3 }
     ]
   }, {
     expected: { E: 2, N: 0, S: 2, W: 2 },
+    result: 2,
     directions: [
       { direction: :R, count: 2 },
       { direction: :R, count: 2 },
@@ -231,6 +231,7 @@ all_directions = [
     ]
   }, {
     expected: { E: 10, N: 5, S: 3, W: 0 },
+    result: 12,
     directions: [
       { direction: :R, count: 5 },
       { direction: :L, count: 5 },
@@ -241,6 +242,5 @@ all_directions = [
 ]
 
 all_directions.each do |d|
-  # ap d
   test_count(compute(d[:directions]), d[:expected])
 end
