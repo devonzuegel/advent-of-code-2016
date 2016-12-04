@@ -189,9 +189,11 @@ TURNS = {
   W: { L: :S, R: :N }
 }.freeze
 
+
 def get_total(c)
   ((c[:N] - c[:S]) + (c[:E] - c[:W])).abs
 end
+
 
 def test_count(computed, expected)
   if (computed != expected) || (get_total(computed) != get_total(expected))
@@ -201,19 +203,41 @@ def test_count(computed, expected)
   end
 end
 
+
 def compute(directions)
   facing   = :N
   counters = COUNTERS.clone
-  # visited  = Set.new([{ x: 0, y: 0 }])
+  visited  = [{ x: 0, y: 0 }]
+  first_repeat = nil
 
   directions.each do |d|
     facing = TURNS[facing][d[:direction]]
     counters[facing] += d[:count]
+
+    d[:count].times do |i|
+      curr_location = visited.last.clone
+
+      case facing
+      when :N then curr_location[:y] += 1
+      when :E then curr_location[:x] += 1
+      when :S then curr_location[:y] -= 1
+      when :W then curr_location[:x] -= 1
+      end
+
+      if visited.include?(curr_location) && !first_repeat
+        puts "#{curr_location}".green
+        first_repeat = curr_location
+      end
+
+      visited << curr_location
+    end
   end
 
-  ap counters
+  # ap counters
+  # ap visited
   counters
 end
+
 
 all_directions = [
   {
@@ -246,6 +270,7 @@ all_directions = [
     directions: CHALLENGE_DIRECTIONS
   }
 ]
+
 
 all_directions.each do |d|
   test_count(compute(d[:directions]), d[:expected])
