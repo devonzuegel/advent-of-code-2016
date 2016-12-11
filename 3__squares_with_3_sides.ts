@@ -8,3 +8,9 @@ export const possibleTriangle = (sides: number[]): boolean =>
 
 export const numPossible = (triangles: number[][]): number =>
   R.filter(R.identity, triangles.map(possibleTriangle)).length
+
+export const formatRow = R.pipe(
+  R.trim,
+  R.split(/\s+/),
+  R.map((s: string) => parseInt(s, 10))
+)

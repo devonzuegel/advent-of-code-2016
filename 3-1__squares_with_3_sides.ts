@@ -1,19 +1,15 @@
 import * as R from 'ramda'
 import { cmp, getLines } from './utils'
-import {
-  possibleTriangle,
-  numPossible,
-} from './3__squares_with_3_sides'
+import { possibleTriangle, numPossible, formatRow } from './3__squares_with_3_sides'
 
-const getTrianglesFromFile = (filename: string): number[][] =>
-  getLines(filename).map(line =>
-    line
-      .trim()
-      .split(/\s+/)
-      .map(s => parseInt(s, 10))
+const getTriangles = R.map(
+  R.pipe(
+    formatRow,
+    R.filter(R.pipe(R.equals(NaN), R.not))
   )
+ )
 
-const CHALLENGE_INPUT = getTrianglesFromFile('3-1__squares_with_3_sides.txt')
+const CHALLENGE_INPUT = getTriangles(getLines('3-1__squares_with_3_sides.txt'))
 
 const TESTS = [
   [

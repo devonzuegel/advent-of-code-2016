@@ -1,28 +1,20 @@
 import * as R from 'ramda'
-import { cmp, getLines } from './utils'
-import {
-  possibleTriangle,
-  numPossible,
-} from './3__squares_with_3_sides'
+import { cmp, getLines, p } from './utils'
+import { possibleTriangle, numPossible, formatRow } from './3__squares_with_3_sides'
 
-const getTrianglesFromFile = (filename: string): number[][] =>
-  R.splitEvery(
-    3,
-    R.flatten(
-      R.transpose(getLines(filename).map(line =>
-        R.filter(
-          R.pipe(R.equals(NaN), R.not),
-          line
-            .trim()
-            .split(/\s+/)
-            .map(s => parseInt(s, 10))
-          )
-        )
-      )
+const getTriangles = R.pipe(
+  R.map(
+    R.pipe(
+      formatRow,
+      R.filter(R.pipe(R.equals(NaN), R.not))
     )
-  )
+   ),
+  R.transpose,
+  R.flatten,
+  R.splitEvery(3),
+)
 
-const CHALLENGE_INPUT = getTrianglesFromFile('3-1__squares_with_3_sides.txt')
+const CHALLENGE_INPUT = getTriangles(getLines('3-1__squares_with_3_sides.txt'))
 
 const TESTS = [
   [
