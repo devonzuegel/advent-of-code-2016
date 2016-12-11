@@ -1,25 +1,19 @@
-/// <reference path="typings/globals/node/index.d.ts" />
 import * as R from 'ramda'
-import * as fs from 'fs'
-import { cmp } from './test_utils'
+import { cmp, getLines } from './utils'
+import {
+  possibleTriangle,
+  numPossible,
+} from './3__squares_with_3_sides'
 
 const getTrianglesFromFile = (filename: string): number[][] =>
-  fs
-    .readFileSync(filename, 'utf8')
-    .toString().split("\n")
-    .map(l => l.trim().split(/\s+/).map(s => parseInt(s, 10)))
+  getLines(filename).map(line =>
+    line
+      .trim()
+      .split(/\s+/)
+      .map(s => parseInt(s, 10))
+  )
 
 const CHALLENGE_INPUT = getTrianglesFromFile('3-1__squares_with_3_sides.txt')
-
-const possibleTriangle = (sides: number[]): boolean =>
-  sides[0] < sides[1] + sides[2] &&
-  sides[1] < sides[0] + sides[2] &&
-  sides[2] < sides[1] + sides[0]
-
-const numPossible = (triangles: number[][]): number => {
-  console.log(R.filter(R.identity, triangles.map(possibleTriangle)).length)
-  return R.filter(R.identity, triangles.map(possibleTriangle)).length
-}
 
 const TESTS = [
   [

@@ -1,4 +1,4 @@
-import { cmp } from './test_utils'
+import { cmp } from './utils'
 import {
   getLocations,
   getDigitIndices,

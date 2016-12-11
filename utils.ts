@@ -1,4 +1,6 @@
+/// <reference path="typings/globals/node/index.d.ts" />
 import * as Chalk from 'chalk'
+import * as fs from 'fs'
 
 export const TAB_SIZE = 0
 
@@ -16,3 +18,8 @@ export const cmp = (given: any, expected: any) => {
   }
   p('')
 }
+
+export const getLines = (filename: string): string[] =>
+  fs
+    .readFileSync(filename, 'utf8')
+    .toString().split("\n")
