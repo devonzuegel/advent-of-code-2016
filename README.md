@@ -12,8 +12,8 @@ To run the Javascript file:
 node filename.js
 ```
 
-For faster development, I like running the two at the same time:
+For faster development, you can use the following `run.sh` script:
 
 ```bash
-tsc filename.ts && node filename.js
+sh run.sh filename
 ```
