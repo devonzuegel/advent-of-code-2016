@@ -113,7 +113,7 @@ const TESTS = [
     "1985",
   ], [
     instructionsToPassword(CHALLENGE_INPUT),
-    "1985",
+    "73597",
   ],
 ]
 
