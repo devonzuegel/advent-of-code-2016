@@ -1,51 +1,19 @@
 import * as R from 'ramda'
 import { cmp, getLines, p } from './utils'
+import {
+  invalidRoomNameFormat,
+  sortByCountsAndAlpha,
+  sortKeysByCountsAndAlpha,
+  getAlphaCounts,
+  isReal,
+  getSectorID,
+} from './4__security_thru_obscurity'
 
-const invalidRoomNameFormat = (input: string): boolean =>
-  R.isEmpty(R.match(
-    /^[0-9a-z\-]*\[(.*)\]$/g,
-    input
-  ))
-
-const sortByCountsAndAlpha = (counts) => (a: any, b: any): number => {
-  if (a.length !== 1) throw Error(`${a} is not a character`)
-  if (b.length !== 1) throw Error(`${b} is not a character`)
-
-  if (counts[a] > counts[b]) return -1
-  if (counts[a] < counts[b]) return 1
-
-  if (a < b)  return -1
-  if (a == b) return 0
-  if (a > b)  return 1
-}
-
-const sortKeysByCountsAndAlpha = counts =>
-  R.sort(sortByCountsAndAlpha(counts), R.keys(counts))
-
-const getAlphaCounts = (encrypted: string) =>
-  R.countBy(
-    R.toLower,
-    R.filter(
-      R.pipe(R.match(/[a-z]/g), R.isEmpty, R.not),
-      encrypted.split('')
-    )
-  )
-const isReal = (input: string): boolean => {
-  if (invalidRoomNameFormat(input)) {
-    return false
-  }
-  const [encrypted, checksum, _] = R.split(/[\[\]]/g, input)
-  const charCounts = getAlphaCounts(encrypted)
-  const correctChecksum = R.take(5, sortKeysByCountsAndAlpha(charCounts)).join('')
-
-  return correctChecksum === checksum
-}
-
-const getSectorID = (input: string): number =>
-  parseInt(R.match(/\d+/g, input)[0])
-
-const summedRealSectorIDs = (list: string[]) =>
-  R.sum(R.map(getSectorID, R.filter(isReal, list)))
+const sumRealSectorIDs = R.pipe(
+  R.filter(isReal),
+  R.map(getSectorID),
+  R.sum,
+)
 
 const TESTS = [
   [
@@ -64,6 +32,9 @@ const TESTS = [
     isReal('a-b-c-d-e-f-g-h-987[abcde]'),
     true,
   ], [
+    isReal('qzmt-zixmtkozy-ivhz-343[zimth]'),
+    true,
+  ], [
     isReal('not-a-real-room-404[oarel]'),
     true,
   ], [
@@ -76,7 +47,7 @@ const TESTS = [
     getSectorID('a-b-c-d-e-f-g-h-987[abcde]'),
     987
   ], [
-    summedRealSectorIDs([
+    sumRealSectorIDs([
       'aaaaa-bbb-z-y-x-123[abxyz]',
       'a-b-c-d-e-f-g-h-987[abcde]',
       'not-a-real-room-404[oarel]',
@@ -84,7 +55,7 @@ const TESTS = [
      ]),
     1514
   ], [
-    summedRealSectorIDs(getLines('4-1__security_thru_obscurity.txt')),
+    sumRealSectorIDs(getLines('4-1__security_thru_obscurity.txt')),
     185371
   ]
 ]

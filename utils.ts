@@ -1,6 +1,7 @@
 /// <reference path="typings/globals/node/index.d.ts" />
-import * as Chalk from 'chalk'
 import * as fs from 'fs'
+import * as R from 'ramda'
+import * as Chalk from 'chalk'
 
 export const TAB_SIZE = 0
 
@@ -20,6 +21,7 @@ export const cmp = (given: any, expected: any) => {
 }
 
 export const getLines = (filename: string): string[] =>
-  fs
+  R.filter(R.pipe(R.isEmpty, R.not), fs
     .readFileSync(filename, 'utf8')
     .toString().split("\n")
+  )
