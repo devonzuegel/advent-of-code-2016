@@ -1,11 +1,8 @@
 import * as R from 'ramda'
-import { cmp, getLines, p } from './utils'
-import { Md5 } from 'ts-md5/dist/md5'
+import { cmp, p } from './utils'
+import { Md5 }  from 'ts-md5/dist/md5'
+import { beginsWith5Zeros } from './5__game_of_chess'
 
-const beginsWith5Zeros = hashed => {
-  const match = R.match(/^00000.*/g, hashed)
-  return R.pipe(R.isEmpty, R.not)(match)
-}
 const calculatePassword = (doorID: string): string => {
   let passwordSoFar = ''
   let i = 0
@@ -32,4 +29,4 @@ const TESTS = [
   ],
 ]
 
-TESTS.map(test => cmp(test[0], test[1]))
+TESTS.forEach(test => cmp(test[0], test[1]))
