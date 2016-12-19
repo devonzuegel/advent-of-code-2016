@@ -1,5 +1,5 @@
 import * as R from 'ramda'
-import { cmp, p } from './utils'
+import { cmp, p, insertAt } from './utils'
 import { Md5 }  from 'ts-md5/dist/md5'
 import { beginsWith5Zeros } from './5__game_of_chess'
 import * as Chalk from 'chalk'
@@ -13,9 +13,6 @@ const log = (str: string) => {
     p(str)
   }
 }
-
-const insertAt = (str: string, i: number, replaceWith: string) =>
-  `${str.substr(0, i)}${replaceWith}${str.substr(i + replaceWith.length)}`
 
 const valid_hash_position = (position: number, passwordSoFar: string) => {
   const char = passwordSoFar[position]

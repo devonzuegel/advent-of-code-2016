@@ -5,7 +5,7 @@ import * as Chalk from 'chalk'
 
 export const TAB_SIZE = 0
 
-export const p = console.log;
+export const p = console.log
 
 export const cmp = (given: any, expected: any) => {
   const givenToS = JSON.stringify(given, null, TAB_SIZE)
@@ -25,3 +25,7 @@ export const getLines = (filename: string): string[] =>
     .readFileSync(filename, 'utf8')
     .toString().split("\n")
   )
+
+export const insertAt = (str: string, i: number, replaceWith: string) =>
+  `${str.substr(0, i)}${replaceWith}${str.substr(i + replaceWith.length)}`
+
