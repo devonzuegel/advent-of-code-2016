@@ -5,16 +5,14 @@ import * as Chalk from 'chalk'
 const SHOW_LOGGING = true
 const log = SHOW_LOGGING ? p : x => null
 
-const messagesToCharLists = (messages: string[]): string[][] =>
-  R.pipe(
-    R.map(R.split('')),
-    R.transpose
-  )(messages)
-
 const decodeRepetition = (messages: string[], mostCommon = true): string =>
   R.pipe(
-    messagesToCharLists,
+    // Combine messages into char lists by index
+    R.map(R.split('')),
+    R.transpose,
+    // Count occurrences & return most common char in each list
     R.map(R.pipe(countChars, maxValueKey(mostCommon))),
+    // Join results
     R.join('')
   )(messages)
 
@@ -28,10 +26,6 @@ const maxValueKey = (mostCommon = true) => (map): string =>
 const countChars = (chars: string[]) => R.countBy(R.toLower)(chars)
 
 const TESTS = [
-  () => [
-    messagesToCharLists(['aa', 'bb', 'ab']),
-    [['a', 'b', 'a'], ['a', 'b', 'b']]
-  ],
   () => [
     countChars(['a', 'b', 'c', 'a']),
     { a: 2, b: 1, c: 1 },
