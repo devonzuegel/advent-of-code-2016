@@ -11,18 +11,18 @@ const messagesToCharLists = (messages: string[]): string[][] =>
     R.transpose
   )(messages)
 
-const decodeRepetition = (messages: string[]): string =>
+const decodeRepetition = (messages: string[], mostCommon = true): string =>
   R.pipe(
     messagesToCharLists,
-    R.map(R.pipe(countChars, maxValueKey)),
+    R.map(R.pipe(countChars, maxValueKey(mostCommon))),
     R.join('')
   )(messages)
 
-const maxValueKey = (map): string =>
+const maxValueKey = (mostCommon = true) => (map): string =>
   R.pipe(
     R.keys,
     R.sortBy((k: string): any => map[k]),
-    R.reverse,
+    mostCommon ? R.reverse : R.identity,
   )(map)[0]
 
 const countChars = (chars: string[]) => R.countBy(R.toLower)(chars)
@@ -37,7 +37,7 @@ const TESTS = [
     { a: 2, b: 1, c: 1 },
   ],
   () => [
-    maxValueKey({ a: 1, b: 3, x: 2}),
+    maxValueKey()({ a: 1, b: 3, x: 2}),
     'b',
   ],
   () => [
@@ -75,7 +75,11 @@ const TESTS = [
   ],
   () => [
     decodeRepetition(getLines('6__input.txt')),
-    'dx',
+    'qoclwvah',
+  ],
+  () => [
+    decodeRepetition(getLines('6__input.txt'), false),
+    'ryrgviuv',
   ],
 ]
 
