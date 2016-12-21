@@ -21,14 +21,10 @@ interface Range {
   end: number,
 }
 
-const notBlocked = (last: Range, curr: number[], resultSoFar: number|null) => (
+const notBlocked = (last: Range, curr: Range, resultSoFar: number|null) => (
   R.isNil(resultSoFar)
   && !R.isNil(last)
-  && last.end + 1 < curr[0]
-)
-
-const parseRangeOld = (str: string): number[] => (
-  R.map(parseInt, R.split('-', str))
+  && last.end + 1 < curr.start
 )
 
 const parseRange = (str: string): Range => {
@@ -37,11 +33,11 @@ const parseRange = (str: string): Range => {
 }
 
 const lowestNotBlocked = R.pipe(
-  R.map(parseRangeOld),
-  R.sortBy(R.head),
+  R.map(parseRange),
+  R.sortBy(R.prop('start')),
   R.reduce(
-    ({ last, result }: { last: Range, result: number }, curr: number[]) => ({
-      last: { start: curr[0], end: curr[1] },
+    ({ last, result }: { last: Range, result: number }, curr: Range) => ({
+      last: curr,
       result: notBlocked(last, curr, result) ? last.end + 1 : result
     }),
     { last: null, result: null },
@@ -49,7 +45,9 @@ const lowestNotBlocked = R.pipe(
   R.prop('result'),
 )
 
-
+const parseRangeOld = (str: string): number[] => (
+  R.map(parseInt, R.split('-', str))
+)
 
 const countUnblocked = (unparsedRanges: string[], topOfRange: number = 4294967295) => {
   const parsedRanges      = unparsedRanges.map(parseRangeOld)
