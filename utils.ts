@@ -29,3 +29,4 @@ export const getLines = (filename: string): string[] =>
 export const insertAt = (str: string, i: number, replaceWith: string) =>
   `${str.substr(0, i)}${replaceWith}${str.substr(i + replaceWith.length)}`
 
+export const range = (start, last) => R.range(start, last + 1)
