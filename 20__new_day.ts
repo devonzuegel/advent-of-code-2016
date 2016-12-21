@@ -27,12 +27,17 @@ const notBlocked = (last: Range, curr: number[], resultSoFar: number|null) => (
   && last.end + 1 < curr[0]
 )
 
-const parseRange = (str: string): number[] => (
+const parseRangeOld = (str: string): number[] => (
   R.map(parseInt, R.split('-', str))
 )
 
+const parseRange = (str: string): Range => {
+  const [start, end] = R.map(parseInt, R.split('-', str))
+  return { start, end }
+}
+
 const lowestNotBlocked = R.pipe(
-  R.map(parseRange),
+  R.map(parseRangeOld),
   R.sortBy(R.head),
   R.reduce(
     ({ last, result }: { last: Range, result: number }, curr: number[]) => ({
@@ -47,7 +52,7 @@ const lowestNotBlocked = R.pipe(
 
 
 const countUnblocked = (unparsedRanges: string[], topOfRange: number = 4294967295) => {
-  const parsedRanges      = unparsedRanges.map(parseRange)
+  const parsedRanges      = unparsedRanges.map(parseRangeOld)
   const uncontainedRanges = R.filter(R.pipe(isContained(parsedRanges), R.not), parsedRanges)
   const ranges            = R.sortBy(range => range[0], uncontainedRanges)
 
@@ -80,6 +85,10 @@ const TESTS = [
   /****************************************************/
   () => [
     parseRange('5-8'),
+    { start: 5, end: 8 }
+  ],
+  () => [
+    parseRangeOld('5-8'),
     [5, 8]
   ],
   /****************************************************/
