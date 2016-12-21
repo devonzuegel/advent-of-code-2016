@@ -16,17 +16,37 @@ const isContained = (ranges: number[][]) => (range: number[]) => {
   return false
 }
 
-const lowestNotBlocked = (unparsedRanges: string[]) => {
-  const ranges = R.sortBy(range => range[0], unparsedRanges.map(parseRange))
-
-  for (var i = 0; i < ranges.length - 1; ++i) {
-    if (ranges[i][1] + 1 < ranges[i + 1][0]) {
-      return ranges[i][1] + 1
-    }
-  }
+interface Range {
+  start: number,
+  end: number,
 }
 
-const countUnblocked = (unparsedRanges, topOfRange = 4294967295) => {
+const notBlocked = (last: Range, curr: number[], resultSoFar: number|null) => (
+  R.isNil(resultSoFar)
+  && !R.isNil(last)
+  && last.end + 1 < curr[0]
+)
+
+const parseRange = (str: string): number[] => (
+  R.map(parseInt, R.split('-', str))
+)
+
+const lowestNotBlocked = R.pipe(
+  R.map(parseRange),
+  R.sortBy(R.head),
+  R.reduce(
+    ({ last, result }: { last: Range, result: number }, curr: number[]) => ({
+      last: { start: curr[0], end: curr[1] },
+      result: notBlocked(last, curr, result) ? last.end + 1 : result
+    }),
+    { last: null, result: null },
+  ),
+  R.prop('result'),
+)
+
+
+
+const countUnblocked = (unparsedRanges: string[], topOfRange: number = 4294967295) => {
   const parsedRanges      = unparsedRanges.map(parseRange)
   const uncontainedRanges = R.filter(R.pipe(isContained(parsedRanges), R.not), parsedRanges)
   const ranges            = R.sortBy(range => range[0], uncontainedRanges)
@@ -46,9 +66,6 @@ const countUnblocked = (unparsedRanges, topOfRange = 4294967295) => {
 
   return topOfRange + 1 - numBlocked
 }
-
-const parseRange = (str: string): number[] =>
-  R.map(parseInt, R.split('-', str))
 
 const each = (list: any[], cb: Function): any => {
   for (var i = 0; i < list.length; ++i) {
@@ -145,4 +162,3 @@ TESTS.forEach(test => {
   const res = test()
   cmp(res[0], res[1])
 })
-
