@@ -84,6 +84,19 @@ const getNeighbors = (node: Node, nodes: Node[]): Node[] =>
 const sameNode = (A: Node|Coord, B: Node|Coord): boolean => (A.x == B.x && A.y == B.y)
 const initialCost = (node: Node, start: Node): number => sameNode(node, start) ? 0 : Infinity
 
+const initialData = (nodes: Node[]) =>
+  R.reduce((acc, node: Node) => {
+    const coord = R.pick(['x', 'y'], node)
+    const merged = (val: number) => R.merge(acc, { [JSON.stringify(coord)]: val })
+
+    // p(node)
+    if (node.percentage === 0) return merged(0)
+    for (var i = 0; i < nodes.length; ++i) {
+      if (node.used > nodes[i].size) return merged(2)
+    }
+    return merged(1)
+  }, {}, nodes)
+
 const shortestPath = (nodes: Node[], start: Node, finish: Node): Coord[] => {
   const initNode = (acc, node: Node) => {
     const key = JSON.stringify(node)
@@ -92,7 +105,10 @@ const shortestPath = (nodes: Node[], start: Node, finish: Node): Coord[] => {
     return R.merge(acc, { [key]: cost })
   }
 
-  let data = {}
+  let data = initialData(nodes)
+
+  p(JSON.stringify(data, null, 2))
+
   let path = []
   let previous = {}
   let q = new PriorityQueue()
@@ -165,47 +181,44 @@ const drawShortestPath = (nodes: Node[], start: Node, finish: Node): void => {
 
 const TESTS = [
   /****************************************************/
-  /******************** drawPath **********************/
+  /******************** initialData **********************/
     () => [
-      drawPath(
-        [{ x: 0, y: 0 }],
-        dummyInput({ xDim: 2, yDim: 2 }),
-      ),
-      undefined,
+      initialData(getNodes(getLines('22-example.txt'))),
+      {
+        '{"x":0,"y":0}': 1,
+        '{"x":0,"y":1}': 1,
+        '{"x":0,"y":2}': 2,
+        '{"x":1,"y":0}': 1,
+        '{"x":1,"y":1}': 0,
+        '{"x":1,"y":2}': 1,
+        '{"x":2,"y":0}': 1,
+        '{"x":2,"y":1}': 1,
+        '{"x":2,"y":2}': 1,
+      },
     ],
-    () => [
-      drawPath(
-        [
-          { x: 0, y: 1},
-          { x: 0, y: 2},
-          { x: 1, y: 2},
-          { x: 2, y: 2},
-          { x: 3, y: 2},
-          { x: 4, y: 2},
-          { x: 4, y: 3},
-        ],
-        dummyInput({ xDim: 5, yDim: 5 }),
-      ),
-      undefined,
-    ],
+  // /****************************************************/
+  // /******************** drawShortestPath ******************/
+  //   () => [
+  //     drawShortestPath(
+  //       dummyInput({ xDim: 2, yDim: 2 }),
+  //       dummyNode({ x: 0, y: 0 }),
+  //       dummyNode({ x: 0, y: 1 })
+  //     ),
+  //     undefined,
+  //   ],
+  //   () => [
+  //     drawShortestPath(
+  //       dummyInput({ xDim: 8, yDim: 8 }),
+  //       dummyNode({ x: 0, y: 0 }),
+  //       dummyNode({ x: 6, y: 4 })
+  //     ),
+  //     undefined,
+  //   ],
+]
+
+const OLD_TESTS = [
   /****************************************************/
   /******************** drawShortestPath ******************/
-    () => [
-      drawShortestPath(
-        dummyInput({ xDim: 2, yDim: 2 }),
-        dummyNode({ x: 0, y: 0 }),
-        dummyNode({ x: 0, y: 1 })
-      ),
-      undefined,
-    ],
-    () => [
-      drawShortestPath(
-        dummyInput({ xDim: 8, yDim: 8 }),
-        dummyNode({ x: 0, y: 0 }),
-        dummyNode({ x: 6, y: 4 })
-      ),
-      undefined,
-    ],
     () => [
       drawShortestPath(
         dummyInput({ xDim: 8, yDim: 8 }),
@@ -281,9 +294,30 @@ const TESTS = [
         dummyNode({ x: 1, y: 0 }),
       ],
     ],
-]
-
-const OLD_TESTS = [
+  /****************************************************/
+  /******************** drawPath **********************/
+    () => [
+      drawPath(
+        [{ x: 0, y: 0 }],
+        dummyInput({ xDim: 2, yDim: 2 }),
+      ),
+      undefined,
+    ],
+    () => [
+      drawPath(
+        [
+          { x: 0, y: 1},
+          { x: 0, y: 2},
+          { x: 1, y: 2},
+          { x: 2, y: 2},
+          { x: 3, y: 2},
+          { x: 4, y: 2},
+          { x: 4, y: 3},
+        ],
+        dummyInput({ xDim: 5, yDim: 5 }),
+      ),
+      undefined,
+    ],
   /****************************************************/
   /******************** emptyGrid *******************/
     () => [
