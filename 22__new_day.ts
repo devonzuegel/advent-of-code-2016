@@ -1,7 +1,13 @@
 // import * as XRegExp from 'xregexp'
+import { PriorityQueue } from './priority_queue'
 import * as R from 'ramda'
 import { cmp, p, getLines, range } from './utils'
-import * as Chalk from 'chalk'
+import * as C from 'chalk'
+
+interface Coord {
+  x: number,
+  y: number,
+}
 
 interface Node {
   x:          number,
@@ -75,9 +81,51 @@ const isValidNeighbor = (A: Node) => (B: Node): boolean =>
 const getNeighbors = (node: Node, nodes: Node[]): Node[] =>
   R.filter(isValidNeighbor(node))(nodes)
 
-const shortestPath = (grid: Node[][]): number => {
+const sameNode = (A: Node|Coord, B: Node|Coord) => (A.x == B.x && A.y == B.y)
 
-  return -1
+const initialCost = (node: Node, start: Node): number =>
+  sameNode(node, start) ? 0 : Infinity
+
+const shortestPath = (nodes: Node[], start: Node, finish: Node): Coord[] => {
+  const initNode = (acc, node: Node) => {
+    const cost = initialCost(node, start)
+    q.enqueue(cost, node)
+    return R.merge(acc, { [JSON.stringify(node)]: cost })
+  }
+
+  let path = []
+  let previous = {}
+  let q = new PriorityQueue()
+  let costs = R.reduce(initNode, {}, nodes)
+
+  while (!q.empty()) {
+    let smallest: Node = q.dequeue()
+
+    if (sameNode(smallest, finish)) {
+      while (previous[JSON.stringify(smallest)]) {
+        path.push(R.pick(['x', 'y'], smallest))
+        smallest = previous[JSON.stringify(smallest)]
+      }
+      return path
+    }
+
+    if (!smallest || costs[JSON.stringify(smallest)] === Infinity) {
+      continue
+    }
+
+
+    const neighbors = getNeighbors(smallest, nodes)
+    for (var i = 0; i < neighbors.length; ++i) {
+      const neighbor = neighbors[i]
+      const alt: number = costs[JSON.stringify(smallest)] + 1
+
+      if (alt < costs[JSON.stringify(neighbor)]) {
+        costs[JSON.stringify(neighbor)] = alt
+        previous[JSON.stringify(neighbor)] = smallest
+        q.enqueue(alt, neighbor)
+      }
+    }
+  }
 }
 
 const dummyNode = ({ x, y }: { x: number, y: number }): Node => (
@@ -92,7 +140,71 @@ const dummyInput = ({ xDim, yDim }): Node[] =>
     )
   )
 
+const drawPath = (path: Coord[], nodes: Node[]) => {
+  const grid = buildGrid(nodes)
+  for (var i = 0; i < grid.length; ++i) {
+    const row = grid[i]
+    const toPrint = row.map(coord => R.reduce(
+      (defaultVal, pathStep) => sameNode(pathStep, coord) ? C.white(' ⦿ ') : defaultVal,
+      C.black(' • '),
+      path
+    ))
+    p(R.join('', toPrint))
+  }
+  p('')
+}
+
 const TESTS = [
+  /****************************************************/
+  /******************** drawPath **********************/
+    () => [
+      drawPath(
+        [{ x: 0, y: 0 }],
+        dummyInput({ xDim: 2, yDim: 2 }),
+      ),
+      undefined,
+    ],
+    () => [
+      drawPath(
+        [
+          { x: 0, y: 1},
+          { x: 0, y: 2},
+          { x: 1, y: 2},
+          { x: 2, y: 2},
+          { x: 3, y: 2},
+          { x: 4, y: 2},
+          { x: 4, y: 3},
+        ],
+        dummyInput({ xDim: 5, yDim: 5 }),
+      ),
+      undefined,
+    ],
+  /****************************************************/
+  /******************** shortestPath *******************/
+    () => [
+      drawPath(shortestPath(
+        dummyInput({ xDim: 2, yDim: 2 }),
+        dummyNode({ x: 0, y: 0 }),
+        dummyNode({ x: 0, y: 1 })
+      ), dummyInput({ xDim: 2, yDim: 2 })),
+      undefined,
+    ],
+    () => [
+      shortestPath(
+        dummyInput({ xDim: 2, yDim: 2 }),
+        dummyNode({ x: 0, y: 0 }),
+        dummyNode({ x: 0, y: 1 })
+      ),
+      [{ x: 0, y: 1}],
+    ],
+    () => [
+      shortestPath(
+        dummyInput({ xDim: 2, yDim: 3 }),
+        dummyNode({ x: 0, y: 0 }),
+        dummyNode({ x: 1, y: 2 })
+      ),
+      [{ x: 1, y: 2 }, { x: 0, y: 2}, { x: 0, y: 1 }],
+    ],
   /****************************************************/
   /******************** dummyInput *******************/
     () => [
@@ -138,10 +250,13 @@ const TESTS = [
         dummyInput({ xDim: 2, yDim: 2 }),
       ),
       [
-        dummyNode({ x: 1, y: 0 }),
         dummyNode({ x: 0, y: 1 }),
+        dummyNode({ x: 1, y: 0 }),
       ],
     ],
+]
+
+const OLD_TESTS = [
   /****************************************************/
   /******************** emptyGrid *******************/
     () => [
@@ -227,13 +342,8 @@ const TESTS = [
       ),
       true
     ],
-  /****************************************************/
-  /******************** _ *********************/
-    () => [
-      1,
-      1,
-    ],
 ]
+
 
 TESTS.forEach(test => {
   const res = test()
