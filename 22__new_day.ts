@@ -81,18 +81,18 @@ const isValidNeighbor = (A: Node) => (B: Node): boolean =>
 const getNeighbors = (node: Node, nodes: Node[]): Node[] =>
   R.filter(isValidNeighbor(node))(nodes)
 
-const sameNode = (A: Node|Coord, B: Node|Coord) => (A.x == B.x && A.y == B.y)
-
-const initialCost = (node: Node, start: Node): number =>
-  sameNode(node, start) ? 0 : Infinity
+const sameNode = (A: Node|Coord, B: Node|Coord): boolean => (A.x == B.x && A.y == B.y)
+const initialCost = (node: Node, start: Node): number => sameNode(node, start) ? 0 : Infinity
 
 const shortestPath = (nodes: Node[], start: Node, finish: Node): Coord[] => {
   const initNode = (acc, node: Node) => {
+    const key = JSON.stringify(node)
     const cost = initialCost(node, start)
     q.enqueue(cost, node)
-    return R.merge(acc, { [JSON.stringify(node)]: cost })
+    return R.merge(acc, { [key]: cost })
   }
 
+  let data = {}
   let path = []
   let previous = {}
   let q = new PriorityQueue()
@@ -112,7 +112,6 @@ const shortestPath = (nodes: Node[], start: Node, finish: Node): Coord[] => {
     if (!smallest || costs[JSON.stringify(smallest)] === Infinity) {
       continue
     }
-
 
     const neighbors = getNeighbors(smallest, nodes)
     for (var i = 0; i < neighbors.length; ++i) {
@@ -140,18 +139,28 @@ const dummyInput = ({ xDim, yDim }): Node[] =>
     )
   )
 
-const drawPath = (path: Coord[], nodes: Node[]) => {
+const drawPath = (path: Coord[], nodes: Node[]): void => {
   const grid = buildGrid(nodes)
   for (var i = 0; i < grid.length; ++i) {
     const row = grid[i]
     const toPrint = row.map(coord => R.reduce(
-      (defaultVal, pathStep) => sameNode(pathStep, coord) ? C.white(' ⦿ ') : defaultVal,
+      (defaultVal, pathStep) => {
+        if (sameNode(R.head(path), coord)) return C.yellow(' ⦿ ')
+        if (sameNode(R.last(path), coord)) return C.green(' ⦿ ')
+        if (sameNode(pathStep, coord)) return C.white(' ⦿ ')
+        return defaultVal
+      },
       C.black(' • '),
       path
     ))
     p(R.join('', toPrint))
   }
   p('')
+}
+
+const drawShortestPath = (nodes: Node[], start: Node, finish: Node): void => {
+  const path = shortestPath(nodes, start, finish)
+  drawPath([start, ...path, finish], nodes)
 }
 
 const TESTS = [
@@ -180,15 +189,33 @@ const TESTS = [
       undefined,
     ],
   /****************************************************/
-  /******************** shortestPath *******************/
+  /******************** drawShortestPath ******************/
     () => [
-      drawPath(shortestPath(
+      drawShortestPath(
         dummyInput({ xDim: 2, yDim: 2 }),
         dummyNode({ x: 0, y: 0 }),
         dummyNode({ x: 0, y: 1 })
-      ), dummyInput({ xDim: 2, yDim: 2 })),
+      ),
       undefined,
     ],
+    () => [
+      drawShortestPath(
+        dummyInput({ xDim: 8, yDim: 8 }),
+        dummyNode({ x: 0, y: 0 }),
+        dummyNode({ x: 6, y: 4 })
+      ),
+      undefined,
+    ],
+    () => [
+      drawShortestPath(
+        dummyInput({ xDim: 8, yDim: 8 }),
+        dummyNode({ x: 0, y: 0 }),
+        dummyNode({ x: 6, y: 7 })
+      ),
+      undefined,
+    ],
+  /****************************************************/
+  /******************** shortestPath ******************/
     () => [
       shortestPath(
         dummyInput({ xDim: 2, yDim: 2 }),
