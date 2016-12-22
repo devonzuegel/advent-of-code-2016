@@ -58,11 +58,13 @@ const getDimension = (dimension: string) => (nodes: Node[]) =>
     R.add(1),
   )(nodes)
 
+const emptyGrid = ({ x, y }) => R.times(() => R.times(() => null, x), y)
+
 const buildGrid = (nodes: Node[]): Node[][] => {
-  const numX = getDimension('x')(nodes)
-  const numY = getDimension('y')(nodes)
-  let grid = R.times(() => R.times(() => null, numY), numX)
-  nodes.map(node => { grid[node.x][node.y] = node })
+  const x = getDimension('x')(nodes)
+  const y = getDimension('y')(nodes)
+  let grid = emptyGrid({ x, y })
+  nodes.map(node => grid[node.x][node.y] = node )
   return grid
 }
 
@@ -75,7 +77,59 @@ const shortestPath = (grid: Node[][]): number => {
   return -1
 }
 
+const dummyNode = ({ x, y }: { x: number, y: number }): Node => (
+  { x: x, y: y, size: 111, used: 111, avail: 111, percentage: 111 }
+)
+
+const dummyInput = ({ xDim, yDim }): Node[] =>
+  R.flatten(
+    R.times(
+      x => R.times(y => dummyNode({ x: x, y: y }), yDim),
+      xDim
+    )
+  )
+
 const TESTS = [
+  /****************************************************/
+  /******************** dummyInput *******************/
+    () => [
+      dummyInput({ xDim: 1, yDim: 3 }),
+      [
+        { x: 0, y: 0, size: 111, used: 111, avail: 111, percentage: 111 },
+        { x: 0, y: 1, size: 111, used: 111, avail: 111, percentage: 111 },
+        { x: 0, y: 2, size: 111, used: 111, avail: 111, percentage: 111 },
+      ],
+    ],
+    () => [
+      dummyInput({ xDim: 2, yDim: 2 }),
+      [
+        { x: 0, y: 0, size: 111, used: 111, avail: 111, percentage: 111 },
+        { x: 0, y: 1, size: 111, used: 111, avail: 111, percentage: 111 },
+        { x: 1, y: 0, size: 111, used: 111, avail: 111, percentage: 111 },
+        { x: 1, y: 1, size: 111, used: 111, avail: 111, percentage: 111 },
+      ],
+    ],
+  /****************************************************/
+  /******************** getNeighbors *******************/
+    () => [
+      getNeighbors(
+        dummyNode({ x: 0, y: 0 }),
+        buildGrid(dummyInput({ xDim: 2, yDim: 2 }))
+      ),
+      [
+        [null],
+        [null],
+      ],
+    ],
+  /****************************************************/
+  /******************** emptyGrid *******************/
+    () => [
+      emptyGrid({ x: 1, y: 2}),
+      [
+        [null],
+        [null],
+      ],
+    ],
   /****************************************************/
   /******************** buildGrid *******************/
     () => [
