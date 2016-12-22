@@ -68,9 +68,12 @@ const buildGrid = (nodes: Node[]): Node[][] => {
   return grid
 }
 
-const getNeighbors = (node: Node, grid: Node[][]): Node[] => {
+const isValidNeighbor = (A: Node) => (B: Node): boolean =>
+  (Math.abs(A.x - B.x) === 1 && Math.abs(A.y - B.y) === 0) ||
+  (Math.abs(A.x - B.x) === 0 && Math.abs(A.y - B.y) === 1)
 
-}
+const getNeighbors = (node: Node, nodes: Node[]): Node[] =>
+  R.filter(isValidNeighbor(node))(nodes)
 
 const shortestPath = (grid: Node[][]): number => {
 
@@ -110,15 +113,33 @@ const TESTS = [
       ],
     ],
   /****************************************************/
+  /******************** isValidNeighbor *******************/
+    () => [
+      isValidNeighbor(dummyNode({ x: 0, y: 0 }))(dummyNode({ x: 0, y: 0 })),
+      false,
+    ],
+    () => [
+      isValidNeighbor(dummyNode({ x: 0, y: 0 }))(dummyNode({ x: 0, y: 1 })),
+      true,
+    ],
+    () => [
+      isValidNeighbor(dummyNode({ x: 0, y: 0 }))(dummyNode({ x: 1, y: 1 })),
+      false,
+    ],
+    () => [
+      isValidNeighbor(dummyNode({ x: 1, y: 0 }))(dummyNode({ x: 1, y: 1 })),
+      true,
+    ],
+  /****************************************************/
   /******************** getNeighbors *******************/
     () => [
       getNeighbors(
         dummyNode({ x: 0, y: 0 }),
-        buildGrid(dummyInput({ xDim: 2, yDim: 2 }))
+        dummyInput({ xDim: 2, yDim: 2 }),
       ),
       [
-        [null],
-        [null],
+        dummyNode({ x: 1, y: 0 }),
+        dummyNode({ x: 0, y: 1 }),
       ],
     ],
   /****************************************************/
