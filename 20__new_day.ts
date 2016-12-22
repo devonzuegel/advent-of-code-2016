@@ -50,9 +50,11 @@ const parseRangeOld = (str: string): number[] => (
 )
 
 const countUnblocked = (unparsedRanges: string[], topOfRange: number = 4294967295) => {
-  const parsedRanges      = unparsedRanges.map(parseRangeOld)
-  const uncontainedRanges = R.filter(R.pipe(isContained(parsedRanges), R.not), parsedRanges)
-  const ranges            = R.sortBy(range => range[0], uncontainedRanges)
+  const ranges = R.pipe(
+    R.map(parseRangeOld),
+    parsedRanges => R.reject(isContained(parsedRanges), parsedRanges),
+    R.sortBy(range => range[0]),
+  )(unparsedRanges)
 
   let numBlocked = 0
   let start      = ranges[0][0]
