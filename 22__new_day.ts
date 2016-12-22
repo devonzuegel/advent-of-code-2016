@@ -50,14 +50,29 @@ const getNodes = (lines: string[]): Node[] => R.filter(
   lines,
 ).map(parseLine)
 
+const getDimension = (dimension: string) => (nodes: Node[]) =>
+  R.pipe(
+    R.map(R.prop('x')),
+    R.sort((a: number, b: number) => { return a - b }),
+    (coords: number[]) => R.last(coords),
+    R.add(1),
+  )(nodes)
+
 const buildGrid = (nodes: Node[]): Node[][] => {
-  const num = Math.sqrt(nodes.length)
-  let grid = R.times(
-    () => R.times(() => null, num),
-    num
-  )
+  const numX = getDimension('x')(nodes)
+  const numY = getDimension('y')(nodes)
+  let grid = R.times(() => R.times(() => null, numY), numX)
   nodes.map(node => { grid[node.x][node.y] = node })
   return grid
+}
+
+const getNeighbors = (node: Node, grid: Node[][]): Node[] => {
+
+}
+
+const shortestPath = (grid: Node[][]): number => {
+
+  return -1
 }
 
 const TESTS = [
