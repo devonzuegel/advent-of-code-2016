@@ -1,3 +1,4 @@
+require 'colorize'
 require 'awesome_print'
 require 'guard'
 require 'guard/plugin'
@@ -86,7 +87,8 @@ module Guard
     end
 
     def sh(command)
-      Compat::UI.info("Running typescript command: #{command}")
+      Compat::UI.info("Running typescript command: #{command}".black)
+      puts
       system(command)
     end
 

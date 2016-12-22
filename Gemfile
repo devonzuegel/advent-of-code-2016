@@ -5,4 +5,5 @@ group :development do
   gem 'guard',        '~> 2.14'
   gem 'guard-compat', '~> 1.1'
   gem 'awesome_print'
+  gem 'colorize'
 end
