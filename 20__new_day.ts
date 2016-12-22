@@ -6,19 +6,19 @@ const SHOW_LOGGING = true
 const log = SHOW_LOGGING ? p : x => null
 const range = (start, last) => R.range(start, last + 1)
 
-const isContained = (ranges: number[][]) => (range: number[]) => {
+interface Range {
+  start: number,
+  end: number,
+}
+
+const isContained = (ranges: Range[]) => (range: Range) => {
   for (var i = 0; i < ranges.length; ++i) {
     const other = ranges[i]
-    if (other[0] < range[0] && other[1] > range[1]) {
+    if (other.start < range.start && other.end > range.end) {
       return true
     }
   }
   return false
-}
-
-interface Range {
-  start: number,
-  end: number,
 }
 
 const notBlocked = (last: Range, curr: Range, resultSoFar: number|null) => (
@@ -51,21 +51,21 @@ const parseRangeOld = (str: string): number[] => (
 
 const countUnblocked = (unparsedRanges: string[], topOfRange: number = 4294967295) => {
   const ranges = R.pipe(
-    R.map(parseRangeOld),
-    parsedRanges => R.reject(isContained(parsedRanges), parsedRanges),
-    R.sortBy(range => range[0]),
+    R.map(parseRange),
+    (parsedRanges: Range[]) => R.reject(isContained(parsedRanges), parsedRanges),
+    R.sortBy(R.prop('start')),
   )(unparsedRanges)
 
   let numBlocked = 0
-  let start      = ranges[0][0]
-  let end        = ranges[0][1]
+  let start      = ranges[0].start
+  let end        = ranges[0].end
 
   for (var i = 1; i < ranges.length; ++i) {
-    if (end < ranges[i][0]) {
+    if (end < ranges[i].start) {
       numBlocked += end - start + 1
-      start = ranges[i][0]
+      start = ranges[i].start
     }
-    end = ranges[i][1]
+    end = ranges[i].end
   }
   numBlocked += end - start + 1
 
@@ -142,23 +142,23 @@ const TESTS = [
   /****************************************************/
   () => [
     isContained([
-      [1, 9],
-      [3, 4],
-    ])([3, 4]),
+      { start: 1, end: 9 },
+      { start: 3, end: 4 },
+    ])({ start: 3, end: 4 }),
     true
   ],
   () => [
     isContained([
-      [1, 2],
-      [3, 4],
-    ])([3, 4]),
+      { start: 1, end: 2 },
+      { start: 3, end: 4 },
+    ])({ start: 3, end: 4 }),
     false
   ],
   () => [
     isContained([
-      [1, 2],
-      [3, 4],
-    ])([3, 9]),
+      { start: 1, end: 2 },
+      { start: 3, end: 4 },
+    ])({ start: 3, end: 9 }),
     false
   ],
   () => [
