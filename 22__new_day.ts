@@ -46,16 +46,67 @@ const countViable = (nodes: Node[]): number => {
 }
 
 const getNodes = (lines: string[]): Node[] => R.filter(
-  R.test(/^.*/),
+  R.test(/^\/dev\/grid\/.*/),
   lines,
 ).map(parseLine)
 
+const buildGrid = (nodes: Node[]): Node[][] => {
+  const num = Math.sqrt(nodes.length)
+  let grid = R.times(
+    () => R.times(() => null, num),
+    num
+  )
+  nodes.map(node => { grid[node.x][node.y] = node })
+  return grid
+}
+
 const TESTS = [
+  /****************************************************/
+  /******************** buildGrid *******************/
+    () => [
+      buildGrid(getNodes(getLines('22-example.txt'))),
+      [
+        [
+          { x: 0, y: 0, size: 10, used: 8,  avail: 2, percentage: 80 },
+          { x: 0, y: 1, size: 11, used: 6,  avail: 5, percentage: 54 },
+          { x: 0, y: 2, size: 32, used: 28, avail: 4, percentage: 87 },
+        ], [
+          { x: 1, y: 0, size: 9,  used: 7,  avail: 2, percentage: 77 },
+          { x: 1, y: 1, size: 8,  used: 0,  avail: 8, percentage: 0  },
+          { x: 1, y: 2, size: 11, used: 7,  avail: 4, percentage: 63 },
+        ], [
+          { x: 2, y: 0, size: 10, used: 6,  avail: 4, percentage: 60 },
+          { x: 2, y: 1, size: 9,  used: 8,  avail: 1, percentage: 88 },
+          { x: 2, y: 2, size: 9,  used: 6,  avail: 3, percentage: 66 },
+        ]
+      ],
+    ],
+    () => [
+      buildGrid([
+        { x: 0, y: 0, size: 87, used: 71, avail: 16, percentage: 81 },
+        { x: 1, y: 0, size: 87, used: 71, avail: 16, percentage: 81 },
+        { x: 0, y: 1, size: 87, used: 71, avail: 16, percentage: 81 },
+        { x: 1, y: 1, size: 87, used: 71, avail: 16, percentage: 81 },
+      ]),
+      [
+        [
+          { x: 0, y: 0, size: 87, used: 71, avail: 16, percentage: 81 },
+          { x: 0, y: 1, size: 87, used: 71, avail: 16, percentage: 81 },
+        ], [
+          { x: 1, y: 0, size: 87, used: 71, avail: 16, percentage: 81 },
+          { x: 1, y: 1, size: 87, used: 71, avail: 16, percentage: 81 },
+        ]
+      ]
+    ],
   /****************************************************/
   /******************** countViable *******************/
     () => [
       countViable(getNodes(getLines('22.txt'))),
       892
+    ],
+    () => [
+      countViable(getNodes(getLines('22-example.txt'))),
+      5
     ],
   /****************************************************/
   /******************** parseLine *********************/
