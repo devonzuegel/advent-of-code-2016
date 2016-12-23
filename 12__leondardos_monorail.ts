@@ -129,14 +129,14 @@ const runInstructions = (instructions: Step[], initial_registers?: Registers): R
 
 const TESTS = [
   /******************** composed solution ************************/
-    () => [
-      runInstructions(R.map(parseInstruction, getLines('12.txt')), R.merge(INITIAL_REGISTERS, { c: 1 })),
-      { a: 9227771, b: 5702887, c: 0, d: 0},
-    ],
-    () => [
-      runInstructions(R.map(parseInstruction, getLines('12.txt'))),
-      { a: 318117, b: 196418, c: 0, d: 0},
-    ],
+    // () => [
+    //   runInstructions(R.map(parseInstruction, getLines('12.txt')), R.merge(INITIAL_REGISTERS, { c: 1 })),
+    //   { a: 9227771, b: 5702887, c: 0, d: 0},
+    // ],
+    // () => [
+    //   runInstructions(R.map(parseInstruction, getLines('12.txt'))),
+    //   { a: 318117, b: 196418, c: 0, d: 0},
+    // ],
     () => [
       runInstructions(R.map(parseInstruction, getLines('12_example.txt'))),
       { a: 42, b: 0, c: 0, d: 0 },
