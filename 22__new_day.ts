@@ -71,7 +71,7 @@ const buildGrid = (nodes: Node[]): Node[][] => {
   const y = getDimension('y')(nodes)
   let grid = emptyGrid({ x, y })
   nodes.map(node => grid[node.x][node.y] = node )
-  return grid
+  return R.transpose(grid)
 }
 
 const isValidNeighbor = (A: Node) => (B: Node): boolean =>
@@ -85,7 +85,7 @@ const sameNode = (A: Node|Coord, B: Node|Coord): boolean => (A.x == B.x && A.y =
 const initialCost = (node: Node, start: Node): number => sameNode(node, start) ? 0 : Infinity
 
 const toCoord = (node: Node): Coord => ({ x: node.x, y: node.y })
-const toCoordKey = (node: Node): string => JSON.stringify({ x: node.x, y: node.y })
+const toCoordKey = (node: Node|Coord): string => JSON.stringify({ x: node.x, y: node.y })
 
 const fillStatus = (node: Node, nodes: Node[]): number => {
     if (node.percentage === 0) return 0
@@ -113,7 +113,7 @@ const shortestPath = (nodes: Node[], start: Node, finish: Node): Coord[] => {
   let q        = new PriorityQueue()
   let costs    = R.reduce(initNode, {}, nodes)
 
-  p(JSON.stringify(data, null, 2))
+  // p(JSON.stringify(data, null, 2))
 
   while (!q.empty()) {
     let smallest: Node = q.dequeue()
@@ -159,33 +159,67 @@ const dummyInput = ({ xDim, yDim }): Node[] =>
 
 const drawPath = (path: Coord[], nodes: Node[]): void => {
   const grid = buildGrid(nodes)
+  const data = initialData(nodes)
   for (var i = 0; i < grid.length; ++i) {
     const row = grid[i]
     const toPrint = row.map(coord => R.reduce(
       (defaultVal, pathStep) => {
-        if (sameNode(R.head(path), coord)) return C.yellow(' ⦿ ')
-        if (sameNode(R.last(path), coord)) return C.green(' ⦿ ')
-        if (sameNode(pathStep, coord)) return C.white(' ⦿ ')
+        // if (coord.x === 1 && coord.y === 1) p(defaultVal)
+        if (!R.isNil(coord)) {
+          if (sameNode(R.head(path), coord)) return C.yellow('  ⦿   ')
+          if (sameNode(R.last(path), coord)) return C.green('  ⦿   ')
+          if (sameNode(pathStep, coord))     return C.white('  ⦿   ')
+          if (data[toCoordKey(coord)] === 0) return C.gray('  _   ')
+          if (data[toCoordKey(coord)] === 2) return C.gray('  #   ')
+        }
         return defaultVal
       },
-      C.black(' • '),
+      C.black('  •   '),
       path
     ))
+    // p('')
     p(R.join('', toPrint))
+    // p(C.black(JSON.stringify(R.map(({ x, y }) => [x, y], row))))
   }
   p('')
 }
 
-const drawShortestPath = (nodes: Node[], start: Node, finish: Node): void => {
+const drawShortestPath = (nodes: Node[], start: Node, finish: Node): Coord[] => {
   const path = shortestPath(nodes, start, finish)
   drawPath([start, ...path, finish], nodes)
+  return path
+}
+
+const moveGoalDataTo00 = (nodes: Node[]): number => {
+  const [x, y] = [getDimension('x')(nodes), getDimension('y')(nodes)]
+
+  const empty = R.head(R.filter(node => fillStatus(node, nodes) === 0, nodes))
+  const grid = buildGrid(nodes)
+  // p(JSON.stringify(grid))
+  p(JSON.stringify(nodes))
+  // p(grid[0][0])
+  // p(grid[x - 1][0])
+  const path = drawShortestPath(
+    nodes,
+    grid[0][0],
+    grid[grid.length - 2][0],
+    // R.head(R.filter(
+    //   (node) => node.x === 0 && node.y === 0,
+    //   nodes
+    // )),
+    // R.head(R.filter(
+    //   (node) => node.x === toCoord(empty).x && node.y === toCoord(empty).y,
+    //   nodes
+    // )),
+  )
+  return path.length + 5 * (x - 2)
 }
 
 const TESTS = [
   /****************************************************/
-  /******************** initialData **********************/
+  /******************** ______ **********************/
     () => [
-      initialData(getNodes(getLines('22-example.txt'))),
+      ______('23-example.txt')),
       {
         '{"x":0,"y":0}': 1,
         '{"x":0,"y":1}': 1,
@@ -198,221 +232,9 @@ const TESTS = [
         '{"x":2,"y":2}': 1,
       },
     ],
-  /****************************************************/
-  /******************** drawShortestPath ******************/
-    () => [
-      drawShortestPath(
-        getNodes(getLines('22-example.txt')),
-        dummyNode({ x: 0, y: 0 }),
-        dummyNode({ x: 0, y: 1 })
-      ),
-      undefined,
-    ],
-    // () => [
-    //   drawShortestPath(
-    //     dummyInput({ xDim: 2, yDim: 2 }),
-    //     dummyNode({ x: 0, y: 0 }),
-    //     dummyNode({ x: 0, y: 1 })
-    //   ),
-    //   undefined,
-    // ],
-    // () => [
-    //   drawShortestPath(
-    //     dummyInput({ xDim: 8, yDim: 8 }),
-    //     dummyNode({ x: 0, y: 0 }),
-    //     dummyNode({ x: 6, y: 4 })
-    //   ),
-    //   undefined,
-    // ],
 ]
 
 const OLD_TESTS = [
-  /****************************************************/
-  /******************** drawShortestPath ******************/
-    () => [
-      drawShortestPath(
-        dummyInput({ xDim: 8, yDim: 8 }),
-        dummyNode({ x: 0, y: 0 }),
-        dummyNode({ x: 6, y: 7 })
-      ),
-      undefined,
-    ],
-  /****************************************************/
-  /******************** shortestPath ******************/
-    () => [
-      shortestPath(
-        dummyInput({ xDim: 2, yDim: 2 }),
-        dummyNode({ x: 0, y: 0 }),
-        dummyNode({ x: 0, y: 1 })
-      ),
-      [{ x: 0, y: 1}],
-    ],
-    () => [
-      shortestPath(
-        dummyInput({ xDim: 2, yDim: 3 }),
-        dummyNode({ x: 0, y: 0 }),
-        dummyNode({ x: 1, y: 2 })
-      ),
-      [{ x: 1, y: 2 }, { x: 0, y: 2}, { x: 0, y: 1 }],
-    ],
-  /****************************************************/
-  /******************** dummyInput *******************/
-    () => [
-      dummyInput({ xDim: 1, yDim: 3 }),
-      [
-        { x: 0, y: 0, size: 111, used: 111, avail: 111, percentage: 111 },
-        { x: 0, y: 1, size: 111, used: 111, avail: 111, percentage: 111 },
-        { x: 0, y: 2, size: 111, used: 111, avail: 111, percentage: 111 },
-      ],
-    ],
-    () => [
-      dummyInput({ xDim: 2, yDim: 2 }),
-      [
-        { x: 0, y: 0, size: 111, used: 111, avail: 111, percentage: 111 },
-        { x: 0, y: 1, size: 111, used: 111, avail: 111, percentage: 111 },
-        { x: 1, y: 0, size: 111, used: 111, avail: 111, percentage: 111 },
-        { x: 1, y: 1, size: 111, used: 111, avail: 111, percentage: 111 },
-      ],
-    ],
-  /****************************************************/
-  /******************** isValidNeighbor *******************/
-    () => [
-      isValidNeighbor(dummyNode({ x: 0, y: 0 }))(dummyNode({ x: 0, y: 0 })),
-      false,
-    ],
-    () => [
-      isValidNeighbor(dummyNode({ x: 0, y: 0 }))(dummyNode({ x: 0, y: 1 })),
-      true,
-    ],
-    () => [
-      isValidNeighbor(dummyNode({ x: 0, y: 0 }))(dummyNode({ x: 1, y: 1 })),
-      false,
-    ],
-    () => [
-      isValidNeighbor(dummyNode({ x: 1, y: 0 }))(dummyNode({ x: 1, y: 1 })),
-      true,
-    ],
-  /****************************************************/
-  /******************** getNeighbors *******************/
-    () => [
-      getNeighbors(
-        dummyNode({ x: 0, y: 0 }),
-        dummyInput({ xDim: 2, yDim: 2 }),
-      ),
-      [
-        dummyNode({ x: 0, y: 1 }),
-        dummyNode({ x: 1, y: 0 }),
-      ],
-    ],
-  /****************************************************/
-  /******************** drawPath **********************/
-    () => [
-      drawPath(
-        [{ x: 0, y: 0 }],
-        dummyInput({ xDim: 2, yDim: 2 }),
-      ),
-      undefined,
-    ],
-    () => [
-      drawPath(
-        [
-          { x: 0, y: 1},
-          { x: 0, y: 2},
-          { x: 1, y: 2},
-          { x: 2, y: 2},
-          { x: 3, y: 2},
-          { x: 4, y: 2},
-          { x: 4, y: 3},
-        ],
-        dummyInput({ xDim: 5, yDim: 5 }),
-      ),
-      undefined,
-    ],
-  /****************************************************/
-  /******************** emptyGrid *******************/
-    () => [
-      emptyGrid({ x: 1, y: 2}),
-      [
-        [null],
-        [null],
-      ],
-    ],
-  /****************************************************/
-  /******************** buildGrid *******************/
-    () => [
-      buildGrid(getNodes(getLines('22-example.txt'))),
-      [
-        [
-          { x: 0, y: 0, size: 10, used: 8,  avail: 2, percentage: 80 },
-          { x: 0, y: 1, size: 11, used: 6,  avail: 5, percentage: 54 },
-          { x: 0, y: 2, size: 32, used: 28, avail: 4, percentage: 87 },
-        ], [
-          { x: 1, y: 0, size: 9,  used: 7,  avail: 2, percentage: 77 },
-          { x: 1, y: 1, size: 8,  used: 0,  avail: 8, percentage: 0  },
-          { x: 1, y: 2, size: 11, used: 7,  avail: 4, percentage: 63 },
-        ], [
-          { x: 2, y: 0, size: 10, used: 6,  avail: 4, percentage: 60 },
-          { x: 2, y: 1, size: 9,  used: 8,  avail: 1, percentage: 88 },
-          { x: 2, y: 2, size: 9,  used: 6,  avail: 3, percentage: 66 },
-        ]
-      ],
-    ],
-    () => [
-      buildGrid([
-        { x: 0, y: 0, size: 87, used: 71, avail: 16, percentage: 81 },
-        { x: 1, y: 0, size: 87, used: 71, avail: 16, percentage: 81 },
-        { x: 0, y: 1, size: 87, used: 71, avail: 16, percentage: 81 },
-        { x: 1, y: 1, size: 87, used: 71, avail: 16, percentage: 81 },
-      ]),
-      [
-        [
-          { x: 0, y: 0, size: 87, used: 71, avail: 16, percentage: 81 },
-          { x: 0, y: 1, size: 87, used: 71, avail: 16, percentage: 81 },
-        ], [
-          { x: 1, y: 0, size: 87, used: 71, avail: 16, percentage: 81 },
-          { x: 1, y: 1, size: 87, used: 71, avail: 16, percentage: 81 },
-        ]
-      ]
-    ],
-  /****************************************************/
-  /******************** countViable *******************/
-    () => [
-      countViable(getNodes(getLines('22.txt'))),
-      892
-    ],
-    () => [
-      countViable(getNodes(getLines('22-example.txt'))),
-      5
-    ],
-  /****************************************************/
-  /******************** parseLine *********************/
-    () => [
-      parseLine('/dev/grid/node-x0-y0     87T   71T    16T   81%'),
-      { x: 0, y: 0, size: 87, used: 71, avail: 16, percentage: 81 },
-    ],
-  /****************************************************/
-  /******************** viablePair ********************/
-    () => [
-      viablePair(
-        { x: 0, y: 0, size: 0, used: 0, avail: 0, percentage: 0 },
-        { x: 0, y: 0, size: 0, used: 0, avail: 0, percentage: 0 },
-      ),
-      false
-    ],
-    () => [
-      viablePair(
-        { x: 1, y: 0, size: 0, used: 0, avail: 0, percentage: 0 },
-        { x: 0, y: 0, size: 0, used: 0, avail: 0, percentage: 0 },
-      ),
-      false
-    ],
-    () => [
-      viablePair(
-        { x: 1, y: 0, size: 0, used: 1, avail: 0,  percentage: 0 },
-        { x: 0, y: 0, size: 0, used: 0, avail: 10, percentage: 0 },
-      ),
-      true
-    ],
 ]
 
 // R.concat(TESTS, OLD_TESTS).forEach(test => {

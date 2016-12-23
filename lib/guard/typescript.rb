@@ -9,7 +9,7 @@ module Guard
     def initialize(options = {})
       super
 
-      @cmd = options.fetch(:cmd, %w[tsc])
+      @cmd = options.fetch(:cmd, %w[tsc --strictNullChecks])
     end
 
     # Called once when Guard starts. Please override initialize method to init stuff.
@@ -86,7 +86,7 @@ module Guard
     end
 
     def sh(command)
-      Compat::UI.info("Running typescript command: #{command}".gray)
+      Compat::UI.info("Running typescript command: #{command.blue}")
       puts
       system(command)
     end
