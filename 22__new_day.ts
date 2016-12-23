@@ -84,59 +84,61 @@ const getNeighbors = (node: Node, nodes: Node[]): Node[] =>
 const sameNode = (A: Node|Coord, B: Node|Coord): boolean => (A.x == B.x && A.y == B.y)
 const initialCost = (node: Node, start: Node): number => sameNode(node, start) ? 0 : Infinity
 
-const initialData = (nodes: Node[]) =>
-  R.reduce((acc, node: Node) => {
-    const coord = R.pick(['x', 'y'], node)
-    const merged = (val: number) => R.merge(acc, { [JSON.stringify(coord)]: val })
+const toCoord = (node: Node): Coord => ({ x: node.x, y: node.y })
+const toCoordKey = (node: Node): string => JSON.stringify({ x: node.x, y: node.y })
 
-    // p(node)
-    if (node.percentage === 0) return merged(0)
+const fillStatus = (node: Node, nodes: Node[]): number => {
+    if (node.percentage === 0) return 0
     for (var i = 0; i < nodes.length; ++i) {
-      if (node.used > nodes[i].size) return merged(2)
+      if (node.used > nodes[i].size) return 2
     }
-    return merged(1)
-  }, {}, nodes)
+    return 1
+}
+const initialData = (nodes: Node[]) =>
+  R.reduce((acc, node: Node) => R.merge(acc, {
+    [toCoordKey(node)]: fillStatus(node, nodes)
+  }), {}, nodes)
 
 const shortestPath = (nodes: Node[], start: Node, finish: Node): Coord[] => {
   const initNode = (acc, node: Node) => {
-    const key = JSON.stringify(node)
+    const key = toCoordKey(node)
     const cost = initialCost(node, start)
     q.enqueue(cost, node)
     return R.merge(acc, { [key]: cost })
   }
 
-  let data = initialData(nodes)
+  let data     = initialData(nodes)
+  let path     = []
+  let previous = {}
+  let q        = new PriorityQueue()
+  let costs    = R.reduce(initNode, {}, nodes)
 
   p(JSON.stringify(data, null, 2))
-
-  let path = []
-  let previous = {}
-  let q = new PriorityQueue()
-  let costs = R.reduce(initNode, {}, nodes)
 
   while (!q.empty()) {
     let smallest: Node = q.dequeue()
 
     if (sameNode(smallest, finish)) {
-      while (previous[JSON.stringify(smallest)]) {
+      while (previous[toCoordKey(smallest)]) {
         path.push(R.pick(['x', 'y'], smallest))
-        smallest = previous[JSON.stringify(smallest)]
+        smallest = previous[toCoordKey(smallest)]
       }
       return path
     }
 
-    if (!smallest || costs[JSON.stringify(smallest)] === Infinity) {
+    if (!smallest || costs[toCoordKey(smallest)] === Infinity) {
       continue
     }
 
     const neighbors = getNeighbors(smallest, nodes)
     for (var i = 0; i < neighbors.length; ++i) {
       const neighbor = neighbors[i]
-      const alt: number = costs[JSON.stringify(smallest)] + 1
+      const key = toCoordKey(smallest)
+      const alt: number = costs[key] + ((data[key] === 2) ? Infinity : 1)
 
-      if (alt < costs[JSON.stringify(neighbor)]) {
-        costs[JSON.stringify(neighbor)] = alt
-        previous[JSON.stringify(neighbor)] = smallest
+      if (alt < costs[toCoordKey(neighbor)]) {
+        costs[toCoordKey(neighbor)] = alt
+        previous[toCoordKey(neighbor)] = smallest
         q.enqueue(alt, neighbor)
       }
     }
@@ -196,24 +198,32 @@ const TESTS = [
         '{"x":2,"y":2}': 1,
       },
     ],
-  // /****************************************************/
-  // /******************** drawShortestPath ******************/
-  //   () => [
-  //     drawShortestPath(
-  //       dummyInput({ xDim: 2, yDim: 2 }),
-  //       dummyNode({ x: 0, y: 0 }),
-  //       dummyNode({ x: 0, y: 1 })
-  //     ),
-  //     undefined,
-  //   ],
-  //   () => [
-  //     drawShortestPath(
-  //       dummyInput({ xDim: 8, yDim: 8 }),
-  //       dummyNode({ x: 0, y: 0 }),
-  //       dummyNode({ x: 6, y: 4 })
-  //     ),
-  //     undefined,
-  //   ],
+  /****************************************************/
+  /******************** drawShortestPath ******************/
+    () => [
+      drawShortestPath(
+        getNodes(getLines('22-example.txt')),
+        dummyNode({ x: 0, y: 0 }),
+        dummyNode({ x: 0, y: 1 })
+      ),
+      undefined,
+    ],
+    // () => [
+    //   drawShortestPath(
+    //     dummyInput({ xDim: 2, yDim: 2 }),
+    //     dummyNode({ x: 0, y: 0 }),
+    //     dummyNode({ x: 0, y: 1 })
+    //   ),
+    //   undefined,
+    // ],
+    // () => [
+    //   drawShortestPath(
+    //     dummyInput({ xDim: 8, yDim: 8 }),
+    //     dummyNode({ x: 0, y: 0 }),
+    //     dummyNode({ x: 6, y: 4 })
+    //   ),
+    //   undefined,
+    // ],
 ]
 
 const OLD_TESTS = [
@@ -405,7 +415,7 @@ const OLD_TESTS = [
     ],
 ]
 
-
+// R.concat(TESTS, OLD_TESTS).forEach(test => {
 TESTS.forEach(test => {
   const res = test()
   cmp(res[0], res[1])

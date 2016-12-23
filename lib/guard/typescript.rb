@@ -64,7 +64,6 @@ module Guard
     # @return [Object] the task result
     #
     def run_on_modifications(paths)
-      ap paths
       compile(paths)
     end
 
@@ -87,7 +86,7 @@ module Guard
     end
 
     def sh(command)
-      Compat::UI.info("Running typescript command: #{command}".black)
+      Compat::UI.info("Running typescript command: #{command}".gray)
       puts
       system(command)
     end
