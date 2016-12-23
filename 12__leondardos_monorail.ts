@@ -64,9 +64,9 @@ const jnz = (x: string|number, y: number) => (registers: Registers): number => {
   return y
 }
 
-const runInstructions = (instructions: Step[]): Registers => {
+const runInstructions = (instructions: Step[], initial_registers?: Registers): Registers => {
   let index: number        = 0
-  let registers: Registers = INITIAL_REGISTERS
+  let registers: Registers = initial_registers || INITIAL_REGISTERS
   let total = 0
 
   log(C.gray(C.blue(`)0  start => ${C.white(JSON.stringify(registers))}`)))
@@ -146,6 +146,10 @@ const parseInstruction = (line: string): Step => {
 
 const TESTS = [
   /******************** composed solution ************************/
+    () => [
+      runInstructions(R.map(parseInstruction, getLines('12.txt')), R.merge(INITIAL_REGISTERS, { c: 1 })),
+      { a: 9227771, b: 5702887, c: 0, d: 0},
+    ],
     () => [
       runInstructions(R.map(parseInstruction, getLines('12.txt'))),
       { a: 318117, b: 196418, c: 0, d: 0},
@@ -244,8 +248,8 @@ const OLD_TESTS = [
     ],
 ]
 
-R.concat(TESTS, OLD_TESTS).forEach(test => {
-// TESTS.forEach(test => {
+// R.concat(TESTS, OLD_TESTS).forEach(test => {
+TESTS.forEach(test => {
   const res = test()
   cmp(res[0], res[1])
 })
