@@ -1,7 +1,7 @@
 import * as R from 'ramda'
 import * as C from 'chalk'
 import { PriorityQueue } from './priority_queue'
-import { cmp, getLines, p } from './utils'
+import { cmp, getLines, p, range } from './utils'
 
 const EXAMPLE = `###########
 #0.1.....2#
@@ -42,7 +42,7 @@ const getNeighbors = (node: Node, nodes: Node[], grid: boolean[][]) =>
     nodes,
   )
 
-const shortestPath = (nodes: Node[], start: Node, finish: Node, grid: boolean[][]): Node[] => {
+const dijkstras = (nodes: Node[], start: Node, finish: Node, grid: boolean[][]): Node[] => {
   const initNode = (acc, node: Node) => {
     const key = toKey(node)
     const cost = initialCost(node, start)
@@ -71,7 +71,6 @@ const shortestPath = (nodes: Node[], start: Node, finish: Node, grid: boolean[][
     }
 
     const neighbors = getNeighbors(smallest, nodes, grid)
-    p(C.blue(JSON.stringify(neighbors)))
     for (var i = 0; i < neighbors.length; ++i) {
       const neighbor = neighbors[i]
       const alt: number = costs[toKey(smallest)] + 1
@@ -106,7 +105,7 @@ const getLocations = (lines: string[]) => {
   )
   parsed.map((row, x) => {
     row.map((elem, y) => {
-      if (!!elem) {
+      if (elem !== null && elem >= 0) {
         locations = R.merge(locations, { [elem]: { x, y } })
       }
     })
@@ -114,31 +113,108 @@ const getLocations = (lines: string[]) => {
   return locations
 }
 
-const fn = (grid: boolean[][]) => {
+const permute = (arr: any[]) => {
+  var results = [],
+      l = arr.length,
+      used = Array(l), // Array of bools. Keeps track of used items
+      data = Array(l); // Stores items of the current permutation
+  (function backtracking(pos) {
+    if(pos == l) return results.push(data.slice());
+    for(var i=0; i<l; ++i) if(!used[i]) { // Iterate unused items
+      used[i] = true;      // Mark item as used
+      data[pos] = arr[i];  // Assign item at the current position
+      backtracking(pos+1); // Recursive call
+      used[i] = false;     // Mark item as not used
+    }
+  })(0);
+  return results;
+}
+
+const shortestPath = (start: Node, finish: Node, grid: boolean[][]) => {
   const nodes  = R.flatten(grid.map((row, x) => row.map((blocked, y) => ({ x, y, blocked }))))
-  const start  = { x: 1, y: 1, blocked: false }
-  const finish = { x: 3, y: 1, blocked: false }
-  return shortestPath(R.flatten(nodes), start, finish, grid)
+  return dijkstras(R.flatten(nodes), start, finish, grid)
+}
+
+const possibleOrderings = (list: number[]) => R.filter(
+  (numbers: number[]) => R.pipe(R.head, R.equals(0))(numbers),
+  permute(list)
+)
+
+const costOfOrdering = (steps: number[], locations, grid: boolean[][]) => {
+  let costs = {}
+  for (var i = 0; i < steps.length - 1; ++i) {
+    const [A, B] = [steps[i], steps[i + 1]]
+    const [start, finish] = [locations[`${A}`], locations[`${B}`]]
+    costs[`${A}-${B}`] = shortestPath(start, finish, grid).length - 1
+  }
+  p(costs)
+  return costs
+}
+
+const getMinCost = (num: number, inputLines: string[]) => {
+  const costs = R.map(
+    o => costOfOrdering(o, getLocations(inputLines), buildGrid(inputLines)),
+    possibleOrderings(range(0, num)),
+  )
+  const summedCosts = R.map(R.pipe(R.values, R.sum), costs)
+  return R.reduce(R.min, Infinity, summedCosts)
 }
 
 const TESTS = [
-  /******************** ____ ************************/
+    // () => [
+    //   buildGrid(R.split("\n", EXAMPLE)),
+    //   [[true,true,true,true,true,true,true,true,true,true,true],[true,false,false,false,false,false,false,false,false,false,true],[true,false,true,true,true,true,true,true,true,false,true],[true,false,false,false,false,false,false,false,false,false,true],[true,true,true,true,true,true,true,true,true,true,true]],
+    // ],
+    // () => [
+    //   getLocations(R.split("\n", EXAMPLE)),
+    //   {
+    //     '0': { x: 1, y: 1},
+    //     '1': { x: 1, y: 3 },
+    //     '2': { x: 1, y: 9 },
+    //     '3': { x: 3, y: 9 },
+    //     '4': { x: 3, y: 1 },
+    //   },
+    // ],
+    // () => [
+    //   shortestPath(
+    //     { x: 1, y: 1, blocked: false },
+    //     { x: 3, y: 1, blocked: false },
+    //     buildGrid(R.split("\n", EXAMPLE))
+    //   ),
+    //   undefined,
+    // ],
+    // () => [
+    //   possibleOrderings([0,1,2]),
+    //   [[0,1,2],[0,2,1]],
+    // ],
+    // () => [
+    //   costOfOrdering(
+    //     [0,1,2],
+    //     getLocations(R.split("\n", EXAMPLE)),
+    //     buildGrid(R.split("\n", EXAMPLE))
+    //   ),
+    //   {}
+    // ],
     () => [
-      buildGrid(R.split("\n", EXAMPLE)),
-      [[true,true,true,true,true,true,true,true,true,true,true],[true,false,false,false,false,false,false,false,false,false,true],[true,false,true,true,true,true,true,true,true,false,true],[true,false,false,false,false,false,false,false,false,false,true],[true,true,true,true,true,true,true,true,true,true,true]],
-    ],
-    () => [
-      getLocations(R.split("\n", EXAMPLE)),
+      costOfOrdering(
+        [0,4,1,2,3],
+        getLocations(R.split("\n", EXAMPLE)),
+        buildGrid(R.split("\n", EXAMPLE))
+      ),
       {
-        '1': { x: 1, y: 3 },
-        '2': { x: 1, y: 9 },
-        '3': { x: 3, y: 9 },
-        '4': { x: 3, y: 1 },
+        '0-4': 2,
+        '4-1': 4,
+        '1-2': 6,
+        '2-3': 2,
       },
     ],
     () => [
-      fn(buildGrid(R.split("\n", EXAMPLE))),
-      undefined,
+      getMinCost(4, R.split("\n", EXAMPLE)),
+      14,
+    ],
+    () => [
+      getMinCost(7, getLines('24.txt')),
+      14,
     ],
     // () => [
     //   ____(getLines('12.txt')),
@@ -146,11 +222,13 @@ const TESTS = [
     // ],
 ]
 
-const OLD_TESTS = [
-]
+// const OLD_TESTS = [
+// ]
 
-R.concat(TESTS, OLD_TESTS).forEach(test => {
-// TESTS.forEach(test => {
-  const res = test()
-  cmp(res[0], res[1])
-})
+// R.concat(TESTS, OLD_TESTS).forEach(test => {
+// // TESTS.forEach(test => {
+//   const res = test()
+//   cmp(res[0], res[1])
+// })
+
+p(possibleOrderings(range(0, 7)).length)
