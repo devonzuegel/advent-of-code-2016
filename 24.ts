@@ -43,17 +43,17 @@ const getNeighbors = (node: Node, nodes: Node[], grid: boolean[][]) =>
   )
 
 const dijkstras = (nodes: Node[], start: Node, finish: Node, grid: boolean[][]): Node[] => {
-  const initNode = (acc, node: Node) => {
-    const key = toKey(node)
+  const initNode = (node: Node) => {
     const cost = initialCost(node, start)
     q.enqueue(cost, node)
-    return R.merge(acc, { [key]: cost })
+    return cost
   }
 
   let path: Node[] = [start]
   let previous     = {}
   let q            = new PriorityQueue()
-  let costs        = R.reduce(initNode, {}, nodes)
+  let costs        = {}
+  nodes.map(n => costs[toKey(n)] = initNode(n))
 
   while (!q.empty()) {
     let smallest: Node = q.dequeue()
@@ -140,22 +140,39 @@ const possibleOrderings = (list: number[]) => R.filter(
   permute(list)
 )
 
-const costOfOrdering = (steps: number[], locations, grid: boolean[][]) => {
+const costOfOrdering = (steps: number[], stepCosts) => {
   let costs = {}
   for (var i = 0; i < steps.length - 1; ++i) {
     const [A, B] = [steps[i], steps[i + 1]]
-    const [start, finish] = [locations[`${A}`], locations[`${B}`]]
-    costs[`${A}-${B}`] = shortestPath(start, finish, grid).length - 1
+    costs[`${A}-${B}`] = stepCosts[`${A}-${B}`]
   }
-  p(costs)
   return costs
 }
 
 const getMinCost = (num: number, inputLines: string[]) => {
-  const costs = R.map(
-    o => costOfOrdering(o, getLocations(inputLines), buildGrid(inputLines)),
-    possibleOrderings(range(0, num)),
+  const locations = getLocations(inputLines)
+  const pairs = R.pipe(
+    R.reject(pair => pair[0] === pair[1]),
+    R.map(R.sort((a: number, b: number) => (a - b))),
+    R.uniq,
+  )(R.xprod(range(0, num), range(0, num)))
+
+  p(C.blue(String(pairs.length)))
+
+  let stepCosts = {}
+  const grid = buildGrid(inputLines)
+  R.map(
+    ([ A, B ]: number[]): void => {
+      const [start, finish] = [locations[`${A}`], locations[`${B}`]]
+      // p(`calculating shortest path between ${[start.x, start.y]} and ${[finish.x, finish.y]}`)
+
+      const pathLength = shortestPath(start, finish, grid).length - 1
+      stepCosts[`${A}-${B}`] = pathLength
+      stepCosts[`${B}-${A}`] = pathLength
+    },
+    pairs
   )
+  const costs = R.map(o => costOfOrdering(o, stepCosts), possibleOrderings(range(0, num)))
   const summedCosts = R.map(R.pipe(R.values, R.sum), costs)
   return R.reduce(R.min, Infinity, summedCosts)
 }
@@ -195,26 +212,26 @@ const TESTS = [
     //   ),
     //   {}
     // ],
-    () => [
-      costOfOrdering(
-        [0,4,1,2,3],
-        getLocations(R.split("\n", EXAMPLE)),
-        buildGrid(R.split("\n", EXAMPLE))
-      ),
-      {
-        '0-4': 2,
-        '4-1': 4,
-        '1-2': 6,
-        '2-3': 2,
-      },
-    ],
+    // () => [
+    //   costOfOrdering(
+    //     [0,4,1,2,3],
+    //     getLocations(R.split("\n", EXAMPLE)),
+    //     buildGrid(R.split("\n", EXAMPLE))
+    //   ),
+    //   {
+    //     '0-4': 2,
+    //     '4-1': 4,
+    //     '1-2': 6,
+    //     '2-3': 2,
+    //   },
+    // ],
     () => [
       getMinCost(4, R.split("\n", EXAMPLE)),
       14,
     ],
     () => [
       getMinCost(7, getLines('24.txt')),
-      14,
+      464,
     ],
     // () => [
     //   ____(getLines('12.txt')),
@@ -222,13 +239,12 @@ const TESTS = [
     // ],
 ]
 
-// const OLD_TESTS = [
-// ]
+const OLD_TESTS = [
+]
 
-// R.concat(TESTS, OLD_TESTS).forEach(test => {
-// // TESTS.forEach(test => {
-//   const res = test()
-//   cmp(res[0], res[1])
-// })
+R.concat(TESTS, OLD_TESTS).forEach(test => {
+// TESTS.forEach(test => {
+  const res = test()
+  cmp(res[0], res[1])
+})
 
-p(possibleOrderings(range(0, 7)).length)
