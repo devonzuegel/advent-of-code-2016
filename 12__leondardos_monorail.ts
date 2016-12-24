@@ -1,21 +1,10 @@
-// import * as XRegExp from 'xregexp'
-import { PriorityQueue } from './priority_queue'
 import * as R from 'ramda'
-import { cmp, p, getLines, range } from './utils'
-import * as C from 'chalk'
-
-const SHOW_LOGGING = false
-const log = SHOW_LOGGING ? p : x => null
+import { cmp, getLines } from './utils'
 
 enum StepType { cpy, inc, dec, jnz }
-const StepTypes = {
-  [StepType.cpy]: 'cpy',
-  [StepType.inc]: 'inc',
-  [StepType.dec]: 'dec',
-  [StepType.jnz]: 'jnz',
-}
 
 interface Registers {
+  [index: string]: number,
   readonly a: number,
   readonly b: number,
   readonly c: number,
@@ -107,6 +96,8 @@ const parseInstruction = (line: string): Step => {
       type: StepType.jnz,
     }
   }
+
+  throw Error('Bad instruction!')
 }
 
 const runInstructions = (instructions: Step[], initial_registers?: Registers): Registers => {
@@ -231,8 +222,8 @@ const OLD_TESTS = [
     ],
 ]
 
-// R.concat(TESTS, OLD_TESTS).forEach(test => {
-TESTS.forEach(test => {
+R.concat(TESTS, OLD_TESTS).forEach(test => {
+// TESTS.forEach(test => {
   const res = test()
   cmp(res[0], res[1])
 })
