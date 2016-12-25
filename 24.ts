@@ -172,7 +172,7 @@ const getMinCost = (num: number, inputLines: string[]) => {
     },
     pairs
   )
-  const costs = R.map(o => costOfOrdering(o, stepCosts), possibleOrderings(range(0, num)))
+  const costs = R.map(o => costOfOrdering([...o, 0], stepCosts), possibleOrderings(range(0, num)))
   const summedCosts = R.map(R.pipe(R.values, R.sum), costs)
   return R.reduce(R.min, Infinity, summedCosts)
 }
